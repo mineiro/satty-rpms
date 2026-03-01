@@ -1,0 +1,11 @@
+dist/
+sources/
+*.src.rpm
+*.rpm
+.build/
+vendor/
+target/
+*.tar
+*.tar.*
+*.zip
+*.crate
