@@ -30,29 +30,3 @@ jobs:
       - name: Parse and lint specs
         run: |
           ./scripts/check-specs.sh
-
-  trigger-copr:
-    name: Trigger COPR rebuild
-    needs: parse-and-lint
-    if: >
-      github.event_name != 'pull_request' &&
-      vars.COPR_TRIGGER_ENABLED == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Require COPR webhook secret
-        env:
-          COPR_WEBHOOK_URL: ${{ secrets.COPR_WEBHOOK_URL }}
-        run: |
-          if [[ -z "${COPR_WEBHOOK_URL}" ]]; then
-            echo "::error::COPR_TRIGGER_ENABLED is true, but repository secret COPR_WEBHOOK_URL is not set."
-            echo "See README.md (COPR CI trigger) for setup steps."
-            exit 1
-          fi
-
-      - name: POST custom COPR webhook
-        env:
-          COPR_WEBHOOK_URL: ${{ secrets.COPR_WEBHOOK_URL }}
-        run: |
-          ./scripts/trigger-copr.sh

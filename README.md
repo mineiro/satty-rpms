@@ -47,23 +47,22 @@ Then verify Source URLs and patches, and commit.
 
 **Chroots:** fedora-43, fedora-44, fedora-rawhide (x86_64 + aarch64)
 
-## COPR CI trigger
+## Auto-rebuild on push
 
-GitHub Actions lints the spec on every PR/push. After a successful lint on `main` (or a manual `workflow_dispatch`), it can POST to the COPR custom webhook so SCM builds start automatically.
+Same approach as [gaffer](https://github.com/mineiro/gaffer): a GitHub repository webhook posts to COPR; no Actions secrets are involved.
 
-One-time setup:
+One-time setup (both sides required):
 
-1. In [mineiro/satty](https://copr.fedorainfracloud.org/coprs/mineiro/satty/), open package **satty** → enable **Auto-rebuild**.
-2. Open project **Settings → Integrations** and copy the **Custom webhook** URL for package `satty`  
-   (`https://copr.fedorainfracloud.org/webhooks/custom/<ID>/<UUID>/satty/`).
-3. In this GitHub repo, add secret `COPR_WEBHOOK_URL` with that URL.
-4. Add repository variable `COPR_TRIGGER_ENABLED` = `true`.
+1. In [mineiro/satty](https://copr.fedorainfracloud.org/coprs/mineiro/satty/), open package **satty** and enable **Auto-rebuild**  
+   (`copr-cli edit-package-scm satty --name satty --webhook-rebuild on` only makes COPR *accept* the request).
+2. COPR project **Settings → Integrations**: copy the **GitHub** webhook URL  
+   (`https://copr.fedorainfracloud.org/webhooks/github/<ID>/<UUID>/`).
+3. In this GitHub repo: **Settings → Webhooks → Add webhook**
+   - Payload URL: the URL from step 2
+   - Content type: `application/json`
+   - Secret: leave empty (COPR authenticates via the UUID in the URL; it does not verify `X-Hub-Signature-256`)
+   - Events: **Just the push event** (add *Branch or tag creation* only if you want tag builds)
 
-Until step 4 is set, CI still lints but skips the COPR job.
+After that, every push to `main` rebuilds all COPR chroots. If pushes stop producing builds, check the webhook delivery log under GitHub’s webhook settings before suspecting the spec.
 
-Manual local trigger (same secret/env):
-
-```bash
-export COPR_WEBHOOK_URL='https://copr.fedorainfracloud.org/webhooks/custom/.../satty/'
-./scripts/trigger-copr.sh
-```
+GitHub Actions only lints the spec; it does not trigger COPR.
