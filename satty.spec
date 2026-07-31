@@ -3,7 +3,7 @@
 %global crate satty
 
 Name:           satty
-Version:        0.20.1
+Version:        0.21.1
 Release:        %autorelease
 Summary:        Modern screenshot annotation tool for Linux
 
@@ -35,7 +35,8 @@ tar -xJf %{SOURCE1}
 %cargo_prep -v vendor
 
 %build
-%cargo_build
+# ci-release writes completions/ and man/ outside OUT_DIR for packaging
+%cargo_build -f ci-release
 %{cargo_license_summary}
 %{cargo_license} > LICENSE.dependencies
 %{cargo_vendor_manifest}
@@ -48,10 +49,11 @@ install -Dpm0644 org.satty.Satty.metainfo.xml %{buildroot}%{_metainfodir}/org.sa
 install -Dpm0644 completions/%{name}.bash %{buildroot}%{bash_completions_dir}/%{name}
 install -Dpm0644 completions/%{name}.fish %{buildroot}%{fish_completions_dir}/%{name}.fish
 install -Dpm0644 completions/_%{name} %{buildroot}%{zsh_completions_dir}/_%{name}
+install -Dpm0644 man/%{name}.1 %{buildroot}%{_mandir}/man1/%{name}.1
 
 %if %{with check}
 %check
-%cargo_test
+%cargo_test -f ci-release
 %endif
 
 %files
@@ -66,6 +68,7 @@ install -Dpm0644 completions/_%{name} %{buildroot}%{zsh_completions_dir}/_%{name
 %{bash_completions_dir}/%{name}
 %{fish_completions_dir}/%{name}.fish
 %{zsh_completions_dir}/_%{name}
+%{_mandir}/man1/%{name}.1*
 
 %changelog
 %autochangelog
